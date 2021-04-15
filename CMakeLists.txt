@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15.3)
-include(arm-none-eabi-gcc.cmake)
+include(${CMAKE_TOOLCHAIN_FILE})
 project(STWin-SimpleStream C CXX)
 
 enable_language(CXX ASM)
@@ -23,7 +23,7 @@ set(APP_FILES
         STWin-SimpleStream/startup_stm32l4r9xx.s
         STWin-SimpleStream/knowledgepack/src/sml_output.c
         STWin-SimpleStream/knowledgepack/src/sml_recognition_run.c
-)
+        )
 
 set(BSP_DRIVER_COMPONENT_FILES
         STSW-STWINKT01_V2.1.0/Drivers/BSP/Components/hts221/hts221_reg.c
@@ -54,7 +54,7 @@ set(BSP_DRIVER_COMPONENT_FILES
         STSW-STWINKT01_V2.1.0/Drivers/BSP/Components/stts751/stts751.c
         STSW-STWINKT01_V2.1.0/Drivers/BSP/Components/stts751/stts751_reg.h
         STSW-STWINKT01_V2.1.0/Drivers/BSP/Components/stts751/stts751.h
-)
+        )
 
 set(BSP_DRIVER_STWIN_FILES
         STSW-STWINKT01_V2.1.0/Drivers/BSP/STWIN/STWIN_audio.c
@@ -73,7 +73,7 @@ set(BSP_DRIVER_STWIN_FILES
         STSW-STWINKT01_V2.1.0/Drivers/BSP/STWIN/STWIN_motion_sensors_ex.h
         STSW-STWINKT01_V2.1.0/Drivers/BSP/STWIN/STWIN_sd.c
         STSW-STWINKT01_V2.1.0/Drivers/BSP/STWIN/STWIN_sd.h
-)
+        )
 
 set(ST_HAL_FILES
         STSW-STWINKT01_V2.1.0/Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal.h
@@ -133,7 +133,7 @@ set(ST_HAL_FILES
         STSW-STWINKT01_V2.1.0/Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal.c
         STSW-STWINKT01_V2.1.0/Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_ll_sdmmc.c
         STSW-STWINKT01_V2.1.0/Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_ll_usb.c
-    )
+        )
 
 set(APP_ST_MIDDLEWARES
         STSW-STWINKT01_V2.1.0/Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_core.h
@@ -144,7 +144,7 @@ set(APP_ST_MIDDLEWARES
         STSW-STWINKT01_V2.1.0/Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c
         STSW-STWINKT01_V2.1.0/Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c
         STSW-STWINKT01_V2.1.0/Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc/usbd_cdc.h
-)
+        )
 
 set(FATFS_MIDDLEWARES
         STSW-STWINKT01_V2.1.0/Middlewares/Third_Party/FatFs/src/diskio.c
@@ -156,7 +156,7 @@ set(FATFS_MIDDLEWARES
         STSW-STWINKT01_V2.1.0/Middlewares/Third_Party/FatFs/src/integer.h
         STSW-STWINKT01_V2.1.0/Middlewares/Third_Party/FatFs/src/option/syscall.c
         STSW-STWINKT01_V2.1.0/Middlewares/Third_Party/FatFs/src/option/unicode.c
-)
+        )
 
 set(FREERTOS_MIDDLEWARES
         STSW-STWINKT01_V2.1.0/Middlewares/Third_Party/FreeRTOS/Source/timers.c
@@ -172,21 +172,20 @@ set(FREERTOS_MIDDLEWARES
         STSW-STWINKT01_V2.1.0/Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_4.c
         STSW-STWINKT01_V2.1.0/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.c
         STSW-STWINKT01_V2.1.0/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.h
-)
+        )
 
-set(EXECUTABLE ${PROJECT_NAME}.out)
-
+set(EXECUTABLE ${PROJECT_NAME}.elf)
 
 
 add_executable(${EXECUTABLE}
-    ${APP_FILES}
-    ${BSP_DRIVER_COMPONENT_FILES}
-    ${BSP_DRIVER_STWIN_FILES}
-    ${ST_HAL_FILES}
-    ${APP_ST_MIDDLEWARES}
-    ${FATFS_MIDDLEWARES}
-    ${FREERTOS_MIDDLEWARES}
-)
+        ${APP_FILES}
+        ${BSP_DRIVER_COMPONENT_FILES}
+        ${BSP_DRIVER_STWIN_FILES}
+        ${ST_HAL_FILES}
+        ${APP_ST_MIDDLEWARES}
+        ${FATFS_MIDDLEWARES}
+        ${FREERTOS_MIDDLEWARES}
+        )
 set_target_properties(${EXECUTABLE} PROPERTIES LINKER_LANGUAGE CXX)
 
 target_compile_definitions(${EXECUTABLE} PRIVATE
@@ -196,15 +195,15 @@ target_compile_definitions(${EXECUTABLE} PRIVATE
         )
 
 target_compile_options(${EXECUTABLE} PRIVATE
-    -mcpu=cortex-m4
-    -mthumb
-    -mfpu=fpv4-sp-d16
-    -mfloat-abi=hard
-    -fdata-sections
-    -ffunction-sections
-    -Wall
-    $<$<CONFIG:Debug>:-Og>
-)
+        -mcpu=cortex-m4
+        -mthumb
+        -mfpu=fpv4-sp-d16
+        -mfloat-abi=hard
+        -fdata-sections
+        -ffunction-sections
+        -Wall
+        $<$<CONFIG:Debug>:-Og>
+        )
 
 target_include_directories(${EXECUTABLE} PRIVATE
         STWin-SimpleStream/inc
@@ -234,12 +233,25 @@ target_include_directories(${EXECUTABLE} PRIVATE
 
 target_link_directories(${EXECUTABLE} PRIVATE
         STWin-SimpleStream/knowledgepack/lib
-)
-target_link_libraries(${EXECUTABLE} PRIVATE
-    sensiml
-    tensorflow-microlite
-    m
-)
+        )
+
+if (${SENSIML_RECOGNITION})
+    target_compile_definitions(${EXECUTABLE} PRIVATE
+            -DSENSIML_RECOGNITION=1
+            )
+    target_link_libraries(${EXECUTABLE} PRIVATE
+            sensiml
+            tensorflow-microlite
+            m
+            )
+else()
+    target_compile_definitions(${EXECUTABLE} PRIVATE
+            -DSENSIML_RECOGNITION=0
+            )
+    target_link_libraries(${EXECUTABLE} PRIVATE
+            m
+            )
+endif ()
 
 
 target_link_options(${EXECUTABLE} PRIVATE
@@ -257,13 +269,13 @@ target_link_options(${EXECUTABLE} PRIVATE
         )
 
 
-        # Print executable size
+# Print executable size
 add_custom_command(TARGET ${EXECUTABLE}
-POST_BUILD
-COMMAND arm-none-eabi-size ${EXECUTABLE})
+        POST_BUILD
+        COMMAND arm-none-eabi-size ${EXECUTABLE})
 
 # Create hex file
 add_custom_command(TARGET ${EXECUTABLE}
-POST_BUILD
-COMMAND arm-none-eabi-objcopy -O ihex ${EXECUTABLE} ${PROJECT_NAME}.hex
-COMMAND arm-none-eabi-objcopy -O binary ${EXECUTABLE} ${PROJECT_NAME}.bin)
+        POST_BUILD
+        COMMAND arm-none-eabi-objcopy -O ihex ${EXECUTABLE} ${PROJECT_NAME}.hex
+        COMMAND arm-none-eabi-objcopy -O binary ${EXECUTABLE} ${PROJECT_NAME}.bin)

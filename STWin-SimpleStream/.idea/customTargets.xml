@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CLionExternalBuildManager">
+    <target id="c0babcf0-4e59-493e-afd2-fa0accfce9e6" name="All" defaultType="TOOL">
+      <configuration id="7eeab736-440c-432e-88d4-86c44d4eefae" name="All" toolchainName="MinGW ARM">
+        <build type="TOOL">
+          <tool actionId="Tool_External Tools_clean_with_make" />
+        </build>
+        <clean type="TOOL">
+          <tool actionId="Tool_External Tools_clean_with_make" />
+        </clean>
+      </configuration>
+    </target>
+  </component>
+</project>
