@@ -113,7 +113,7 @@ void AudioProcess(void) {
  * @param  none
  * @retval None
  */
-void Init_Acquisition_Peripherals(uint32_t AudioFreq, uint32_t Device,
+void Audio_Init_Acquisition_Peripherals(uint32_t AudioFreq, uint32_t Device,
 		uint32_t ChnlNbr) {
 	MicParams.BitsPerSample = 16;
 	MicParams.ChannelsNbr = ChnlNbr;

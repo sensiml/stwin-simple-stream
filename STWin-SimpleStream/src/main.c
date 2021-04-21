@@ -57,8 +57,8 @@ DMA_HandleTypeDef hSaiDma;
   */
 PUTCHAR_PROTOTYPE
 {
-  /* Place your implementation of fputc here */
-  return ch;
+    /* Place your implementation of fputc here */
+    return ch;
 }
 
 /**
@@ -68,11 +68,11 @@ PUTCHAR_PROTOTYPE
   */
 GETCHAR_PROTOTYPE
 {
-  /* Place your implementation of fgetc here */
-  uint8_t ch = 0;
+    /* Place your implementation of fgetc here */
+    uint8_t ch = 0;
 
-  ch =  USB_getchar();
-  return ch;
+    ch =  USB_getchar();
+    return ch;
 }
 
 /* Private define ---------------------------------------------------------*/
@@ -235,21 +235,19 @@ int main(void)
 
 #else
     BuildDeviceConfig();
-    /* Thread 1 definition */
 //    osThreadDef(
 //        THREAD_GET_DATA, GetData_Thread, osPriorityAboveNormal, 0, configMINIMAL_STACK_SIZE * 4);
 //
     /* Thread 2 definition */
     osThreadDef(
-        THREAD_WRITE_DATA, WriteData_Thread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE * 4);
+            THREAD_WRITE_DATA, WriteData_Thread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE * 4);
 
     osThreadDef(
-        THREAD_READ_WRITE_USB, UsbComThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE * 8);
+            THREAD_READ_WRITE_USB, UsbComThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE * 8);
 
     /* Start thread 1 */
     // GetDataThreadId = osThreadCreate(osThread(THREAD_GET_DATA), NULL);
-    //  /* Start thread 2 */
-      WriteDataThreadId = osThreadCreate(osThread(THREAD_WRITE_DATA), NULL);
+    WriteDataThreadId = osThreadCreate(osThread(THREAD_WRITE_DATA), NULL);
     UsbComThreadId = osThreadCreate(osThread(THREAD_READ_WRITE_USB), NULL);
 
     /* Start scheduler */
@@ -264,18 +262,18 @@ int main(void)
 #else
 static void BuildDeviceConfig()
 {
-	memset(deviceConfigJson, 0, MAX_CONFIG_MSG_LEN);
+    memset(deviceConfigJson, 0, MAX_CONFIG_MSG_LEN);
 #if CAPTURE_AUDIO
-	InitAudio();
+    InitAudio();
     sprintf(deviceConfigJson,
-             "{"
-             "\"sample_rate\":%d,"
-             "\"samples_per_packet\":%d,"
-             "\"column_location\":{"
-             "\"Microphone\":0}"
-             "}\r\n",
-             AUDIO_IN_SAMPLING_FREQUENCY,
-             DEFAULT_AUDIO_IN_BUFFER_SIZE / sizeof(int16_t));
+            "{"
+            "\"sample_rate\":%d,"
+            "\"samples_per_packet\":%d,"
+            "\"column_location\":{"
+            "\"Microphone\":0}"
+            "}\r\n",
+            AUDIO_IN_SAMPLING_FREQUENCY,
+            DEFAULT_AUDIO_IN_BUFFER_SIZE / sizeof(int16_t));
 #else
 
 #endif
@@ -378,8 +376,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 
 static void InitAudio()
 {
-    Init_Acquisition_Peripherals(
-        AUDIO_IN_SAMPLING_FREQUENCY, ACTIVE_MICROPHONES_MASK, AUDIO_IN_CHANNELS);
+    Audio_Init_Acquisition_Peripherals(
+            AUDIO_IN_SAMPLING_FREQUENCY, ACTIVE_MICROPHONES_MASK, AUDIO_IN_CHANNELS);
     HAL_Delay(1000);
 
 }
@@ -535,32 +533,23 @@ static void UsbComThread(void const* argument)
     (void) argument;
     osEvent  evt;
     uint32_t len_rcvd;
-    sensorPool_id = osPoolCreate(osPool(sensorPool));
-
     sendJsonSem_id = osSemaphoreCreate(osSemaphore(sendJsonSem), 1);
-    osSemaphoreWait(sendJsonSem_id, osWaitForever);
-    sensorPool_id      = osPoolCreate(osPool(sensorPool));
-    sensorDataQueue_id = osMessageCreate(osMessageQ(dataqueue), NULL);
-    //CDC_Transmit_FS((uint8_t*) deviceConfigJson, strlen(deviceConfigJson));
+
     jsonTimerStart();
     volatile int counter = 0;
     for (;;)
     {
-    	counter++;
 
-    	//osSemaphoreWait(sendJsonSem_id, osWaitForever);
-
-
-        memset(connect_buf, 0, MAX_CONNECT_DISCONNECT_STR_LEN);
         if(connected == 0)
         {
-        	getInputString(connect_buf, strlen(connect_str)+1);
-        	if (connect_buf[0] != '\0'){
-        	if(strncmp(connect_buf, connect_str, strlen(connect_str)) == 0)
-        	{
-        		StartDataCollection();
-        	}
-        	}
+            memset(connect_buf, 0, MAX_CONNECT_DISCONNECT_STR_LEN);
+            getInputString(connect_buf, strlen(connect_str));
+            if (connect_buf[0] != '\0'){
+                if(strncmp(connect_buf, connect_str, strlen(connect_str)-1) == 0)
+                {
+                    StartDataCollection();
+                }
+            }
         }
 //        elseif(connected == 1)
 //
@@ -605,14 +594,15 @@ static void WriteData_Thread(void const* argument)
 {
     (void) argument;
     osEvent        evt;
-;
+    ;
 #if CAPTURE_AUDIO
     T_AudioData *aptr;
 #endif
     T_SensorsData* rptr;
     int            size;
     char           data_s[256];
-
+    sensorPool_id      = osPoolCreate(osPool(sensorPool));
+    sensorDataQueue_id = osMessageCreate(osMessageQ(dataqueue), NULL);
     for (;;)
     {
         evt = osMessageGet(sensorDataQueue_id, osWaitForever);  // wait for message
@@ -620,11 +610,12 @@ static void WriteData_Thread(void const* argument)
         {
 
 #if CAPTURE_AUDIO
-        	aptr = evt.value.p;
-        	CDC_Transmit_FS((uint8_t*) aptr->audio, DEFAULT_AUDIO_IN_BUFFER_SIZE);
+            aptr = evt.value.p;
+            CDC_Transmit_FS((uint8_t*) aptr->audio, DEFAULT_AUDIO_IN_BUFFER_SIZE);
+            osPoolFree(sensorPool_id, aptr);
 #else
 
-                rptr = evt.value.p;
+            rptr = evt.value.p;
 
                 if (LoggingInterface == USB_Datalog)
                 {
@@ -717,7 +708,7 @@ void SystemClock_Config(void)
     /**Initializes the CPU, AHB and APB busses clocks
      */
     RCC_ClkInitStruct.ClockType
-        = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
+            = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
     RCC_ClkInitStruct.SYSCLKSource   = RCC_SYSCLKSOURCE_PLLCLK;
     RCC_ClkInitStruct.AHBCLKDivider  = RCC_SYSCLK_DIV1;
     RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
@@ -761,7 +752,7 @@ void SystemClock_Config(void)
 
 static void dataTimer_Callback(void const* arg)
 {
-	osSemaphoreRelease(readDataSem_id);
+    osSemaphoreRelease(readDataSem_id);
 }
 
 #if SENSIML_RECOGNITION
@@ -791,7 +782,7 @@ static void dataTimerStop(void)
 
 static void jsonTimer_Callback(void const* arg)
 {
-	CDC_Transmit_FS((uint8_t*) deviceConfigJson, strlen(deviceConfigJson));
+    CDC_Transmit_FS((uint8_t*) deviceConfigJson, strlen(deviceConfigJson));
 }
 
 static void jsonTimerStart(void)
