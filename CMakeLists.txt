@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.15.3)
 include(${CMAKE_TOOLCHAIN_FILE})
-project(STWin-SimpleStream C CXX)
+project(stwin-sensiml-simplestream C CXX)
 
 enable_language(CXX ASM)
 set(CMAKE_C_STANDARD 99)
@@ -174,7 +174,12 @@ set(FREERTOS_MIDDLEWARES
         STSW-STWINKT01_V2.1.0/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.h
         )
 
-set(EXECUTABLE ${PROJECT_NAME}.elf)
+if (${SENSIML_RECOGNITION})
+    set(EXECUTABLE ${PROJECT_NAME}-recognition.elf)
+else()
+    set(EXECUTABLE ${PROJECT_NAME}-data-collection.elf)
+endif ()
+
 
 
 add_executable(${EXECUTABLE}
