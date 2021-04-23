@@ -52,12 +52,13 @@ extern "C" {
 #define RTC_SYNCH_PREDIV   0x00FF
 
 #define CAPTURE_AUDIO 1
-#ifndef SENSIML_RECOGITION
-#define SENSIML_RECOGNITION 0
-#endif
 #define MAX_CONNECT_DISCONNECT_STR_LEN 11
 #define MAX_CONFIG_MSG_LEN 512
 
+/* Sensor data acquisition period [ms] */
+#define DATA_PERIOD_MS (5)
+#define CONFIG_OUT_PERIOD_MS (1000)
+#define DATAQUEUE_SIZE ((uint32_t) 50)
 
 #define MSG_CONNECT   (0x00000007)
 #define MSG_DISCONNECT	(0x10000007)

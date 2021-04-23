@@ -75,12 +75,6 @@ GETCHAR_PROTOTYPE
     return ch;
 }
 
-/* Private define ---------------------------------------------------------*/
-#define DATAQUEUE_SIZE ((uint32_t) 50)
-
-/* Sensor data acquisition period [ms] */
-#define DATA_PERIOD_MS (5)
-#define CONFIG_OUT_PERIOD_MS (1000)
 
 typedef enum
 {
@@ -92,7 +86,6 @@ typedef enum
 /* Private variables ---------------------------------------------------------*/
 
 /* LoggingInterface = USB_Datalog  --> Save sensors data via USB */
-/* LoggingInterface = SDCARD_Datalog  --> Save sensors data on SDCard */
 LogInterface_TypeDef LoggingInterface = USB_Datalog;
 
 osThreadId GetDataThreadId, WriteDataThreadId, UsbComThreadId;
@@ -235,9 +228,9 @@ int main(void)
 
 #else
     BuildDeviceConfig();
-//    osThreadDef(
-//        THREAD_GET_DATA, GetData_Thread, osPriorityAboveNormal, 0, configMINIMAL_STACK_SIZE * 4);
-//
+    osThreadDef(
+        THREAD_GET_DATA, GetData_Thread, osPriorityAboveNormal, 0, configMINIMAL_STACK_SIZE * 4);
+
     /* Thread 2 definition */
     osThreadDef(
             THREAD_WRITE_DATA, WriteData_Thread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE * 4);
@@ -246,7 +239,7 @@ int main(void)
             THREAD_READ_WRITE_USB, UsbComThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE * 8);
 
     /* Start thread 1 */
-    // GetDataThreadId = osThreadCreate(osThread(THREAD_GET_DATA), NULL);
+    GetDataThreadId = osThreadCreate(osThread(THREAD_GET_DATA), NULL);
     WriteDataThreadId = osThreadCreate(osThread(THREAD_WRITE_DATA), NULL);
     UsbComThreadId = osThreadCreate(osThread(THREAD_READ_WRITE_USB), NULL);
 
