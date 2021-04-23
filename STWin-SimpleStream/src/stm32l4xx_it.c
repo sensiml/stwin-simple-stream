@@ -5,7 +5,7 @@
   * @version v1.3.0
   * @date    13-Nov-2020
   * @brief   Main Interrupt Service Routines.
-  *          This file provides template for all exceptions handler and 
+  *          This file provides template for all exceptions handler and
   *          peripherals interrupt service routine.
   ******************************************************************************
   * @attention
@@ -28,7 +28,7 @@
 #include "stm32l4xx_hal.h"
 #include "stm32l4xx.h"
 #include "STWIN_sd.h"
-#if CAPTURE_AUDIO
+#if ENABLE_AUDIO
 #include "STWIN_audio.h"
 #include "STWIN_bus.h"
 #endif
@@ -43,7 +43,7 @@ void EXTI0_IRQHandler(void);
 /*            Cortex-M4 Processor Exceptions Handlers                         */
 /******************************************************************************/
 extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
-extern SD_HandleTypeDef hsd1; 
+extern SD_HandleTypeDef hsd1;
 
 /**
   * @brief  This function handles NMI exception.
@@ -155,13 +155,15 @@ void SDMMC1_IRQHandler(void)
 
 void EXTI9_5_IRQHandler(void)
 {
- HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_5);		
+ HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_5);
 }
 
 void EXTI0_IRQHandler(void)
 {
   HAL_GPIO_EXTI_IRQHandler(USER_BUTTON_PIN);
 }
+
+#if ENABLE_AUDIO
 void DMA1_Channel1_IRQHandler(void)
 {
   HAL_DMA_IRQHandler(ADC1_Handle.DMA_Handle);
@@ -187,4 +189,5 @@ void DFSDM1_FLT1_IRQHandler(void)
 {
   HAL_DFSDM_IRQHandler(&AMic_OnBoard_DfsdmFilter);
 }
+#endif
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

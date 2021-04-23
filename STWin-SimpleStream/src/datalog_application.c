@@ -144,11 +144,11 @@ void DATALOG_SD_NewLine(void) {
 
 int32_t getSensorsData(T_SensorsData *mptr) {
 	int32_t ret = BSP_ERROR_NONE;
-	mptr->ms_counter = HAL_GetTick();
+
 
 #ifdef USE_IIS2DH
 
-	if (BSP_MOTION_SENSOR_GetAxes( IIS2DH_0, MOTION_ACCELERO,
+	if (BSP_MOTION_SENSOR_GetAxesRaw( IIS2DH_0, MOTION_ACCELERO,
 			&mptr->acc) == BSP_ERROR_COMPONENT_FAILURE) {
 		mptr->acc.x = 0;
 		mptr->acc.y = 0;
@@ -167,7 +167,7 @@ int32_t getSensorsData(T_SensorsData *mptr) {
   
 #endif
 
-	if (BSP_MOTION_SENSOR_GetAxes(ISM330DHCX_0, MOTION_GYRO,
+	if (BSP_MOTION_SENSOR_GetAxesRaw(ISM330DHCX_0, MOTION_GYRO,
 			&mptr->gyro) == BSP_ERROR_COMPONENT_FAILURE) {
 		mptr->gyro.x = 0;
 		mptr->gyro.y = 0;
@@ -175,29 +175,11 @@ int32_t getSensorsData(T_SensorsData *mptr) {
 		ret = BSP_ERROR_COMPONENT_FAILURE;
 	}
 
-	if (BSP_MOTION_SENSOR_GetAxes(IIS2MDC_0, MOTION_MAGNETO,
+	if (BSP_MOTION_SENSOR_GetAxesRaw(IIS2MDC_0, MOTION_MAGNETO,
 			&mptr->mag) == BSP_ERROR_COMPONENT_FAILURE) {
 		mptr->mag.x = 0;
 		mptr->mag.y = 0;
 		mptr->mag.z = 0;
-		ret = BSP_ERROR_COMPONENT_FAILURE;
-	}
-
-	if (BSP_ENV_SENSOR_GetValue(LPS22HH_0, ENV_PRESSURE,
-			&mptr->pressure) == BSP_ERROR_COMPONENT_FAILURE) {
-		mptr->pressure = 0.0f;
-		ret = BSP_ERROR_COMPONENT_FAILURE;
-	}
-
-	if (BSP_ENV_SENSOR_GetValue(STTS751_0, ENV_TEMPERATURE,
-			&mptr->temperature) == BSP_ERROR_COMPONENT_FAILURE) {
-		mptr->temperature = 0.0f;
-		ret = BSP_ERROR_COMPONENT_FAILURE;
-	}
-
-	if (BSP_ENV_SENSOR_GetValue(HTS221_0, ENV_HUMIDITY,
-			&mptr->humidity) == BSP_ERROR_COMPONENT_FAILURE) {
-		mptr->humidity = 0.0f;
 		ret = BSP_ERROR_COMPONENT_FAILURE;
 	}
 
@@ -260,31 +242,7 @@ void MX_DataLogTerminal_Init(void) {
   
 #endif
 
-	BSP_ENV_SENSOR_Init(HTS221_0, ENV_HUMIDITY);
-	BSP_ENV_SENSOR_SetOutputDataRate(HTS221_0, ENV_HUMIDITY, HTS221_ODR);
-
-	BSP_ENV_SENSOR_Init(LPS22HH_0, ENV_PRESSURE);
-	BSP_ENV_SENSOR_SetOutputDataRate(LPS22HH_0, ENV_PRESSURE, LPS22HH_ODR);
-
-	BSP_ENV_SENSOR_Init(STTS751_0, ENV_TEMPERATURE);
-	BSP_ENV_SENSOR_SetOutputDataRate(STTS751_0, ENV_TEMPERATURE, STTS751_ODR);
 }
-
-/**
- * @}
- */
-
-/**
- * @}
- */
-
-/**
- * @}
- */
-
-/**
- * @}
- */
 
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

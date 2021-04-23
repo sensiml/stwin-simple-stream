@@ -29,7 +29,7 @@
 #include "sd_diskio.h"
 #include "usbd_cdc.h"
 
-#if CAPTURE_AUDIO
+#if ENABLE_AUDIO
 #include "stm32l4xx_hal.h"
 #include "STWIN_audio.h"
 #include "STWIN_bus.h"
@@ -46,15 +46,15 @@ DMA_HandleTypeDef hSaiDma;
 #define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
 #define GETCHAR_PROTOTYPE int __io_getchar(void)
 #else
-#define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
-#define GETCHAR_PROTOTYPE int fgetc(FILE *f)
+#define PUTCHAR_PROTOTYPE int fputc(int ch, FILE* f)
+#define GETCHAR_PROTOTYPE int fgetc(FILE* f)
 #endif /* __GNUC__ */
 
 /**
-  * @brief  Retargets the C library printf function to the USART.
-  * @param  None
-  * @retval None
-  */
+ * @brief  Retargets the C library printf function to the USART.
+ * @param  None
+ * @retval None
+ */
 PUTCHAR_PROTOTYPE
 {
     /* Place your implementation of fputc here */
@@ -62,16 +62,16 @@ PUTCHAR_PROTOTYPE
 }
 
 /**
-  * @brief  Retargets the C library scanf function to the USART.
-  * @param  None
-  * @retval None
-  */
+ * @brief  Retargets the C library scanf function to the USART.
+ * @param  None
+ * @retval None
+ */
 GETCHAR_PROTOTYPE
 {
     /* Place your implementation of fgetc here */
     uint8_t ch = 0;
 
-    ch =  USB_getchar();
+    ch = USB_getchar();
     return ch;
 }
 
@@ -98,21 +98,23 @@ osMessageQDef(recogQueue, RECOGNITION_DATA_QUEUE_SZ, int);
 
 osPoolId recogSensorPool_id;
 
-#if CAPTURE_AUDIO
+#if ENABLE_AUDIO
 osPoolDef(recogSensorPool, RECOGNITION_DATA_QUEUE_SZ, T_AudioData);
 #else
 osPoolDef(recogSensorPool, RECOGNITION_DATA_QUEUE_SZ, T_SensorsData);
-#endif  // CAPTURE_AUDIO
+#endif  // ENABLE_AUDIO
 #endif
 osMessageQId sensorDataQueue_id;
 osMessageQDef(dataqueue, DATAQUEUE_SIZE, int);
 
-#if CAPTURE_AUDIO
+#if ENABLE_AUDIO
 osPoolDef(sensorPool, DATAQUEUE_SIZE, T_AudioData);
 static void InitAudio();
 #else
 osPoolDef(sensorPool, DATAQUEUE_SIZE, T_SensorsData);
-#endif  // CAPTURE_AUDIO
+T_SensorsData sensorsDataBuf[SAMPLES_PER_PACKET];
+static int    packet_index;
+#endif  // ENABLE_AUDIO
 osPoolId sensorPool_id;
 
 osSemaphoreId readDataSem_id;
@@ -149,19 +151,28 @@ static void RecognizeData_Thread(void const* argument);
 static char deviceConfigJson[MAX_CONFIG_MSG_LEN];
 
 static void BuildDeviceConfig();
+
 static void UsbComThread(void const* argument);
-static void GetData_Thread(void const* argument);
+
+static void GetMotionDataThread(void const* argument);
+
 static void WriteData_Thread(void const* argument);
+
 static void StartDataCollection(void);
+
 static void StopDataCollection(void);
 
 
 static void dataTimer_Callback(void const* arg);
+
 static void dataTimerStart(void);
+
 static void dataTimerStop(void);
 
 static void jsonTimer_Callback(void const* arg);
+
 static void jsonTimerStart(void);
+
 static void jsonTimerStop(void);
 
 osTimerId sensorTimId;
@@ -172,7 +183,12 @@ osTimerDef(JsonTimer, jsonTimer_Callback);
 
 #endif  // SENSIML_RECOGNITION
 
-void        SystemClock_Config(void);
+#if ENABLE_AUDIO
+static void InitAudio();
+#endif
+
+void SystemClock_Config(void);
+
 static void _Error_Handler(void);
 
 
@@ -206,15 +222,8 @@ int main(void)
     BSP_BC_CmdSend(BATMS_ON);
     t_stwin = HAL_GetTick();
 
-    if (LoggingInterface == USB_Datalog) /* Configure the USB */
-    {
-        MX_USB_DEVICE_Init();
-        HAL_Delay(3000);
-    }
-//    else /* Configure the SDCard */
-//    {
-//        DATALOG_SD_Init();
-//    }
+    MX_USB_DEVICE_Init();
+    HAL_Delay(3000);
 
 #if SENSIML_RECOGNITION
     kb_model_init();
@@ -228,20 +237,25 @@ int main(void)
 
 #else
     BuildDeviceConfig();
-    osThreadDef(
-        THREAD_GET_DATA, GetData_Thread, osPriorityAboveNormal, 0, configMINIMAL_STACK_SIZE * 4);
-
+#if ENABLE_AUDIO == 0
+    osThreadDef(THREAD_GET_DATA,
+                GetMotionDataThread,
+                osPriorityAboveNormal,
+                0,
+                configMINIMAL_STACK_SIZE * 4);
+#endif
     /* Thread 2 definition */
     osThreadDef(
-            THREAD_WRITE_DATA, WriteData_Thread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE * 4);
+        THREAD_WRITE_DATA, WriteData_Thread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE * 4);
 
     osThreadDef(
-            THREAD_READ_WRITE_USB, UsbComThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE * 8);
+        THREAD_READ_WRITE_USB, UsbComThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE * 8);
 
-    /* Start thread 1 */
+#if ENABLE_AUDIO == 0
     GetDataThreadId = osThreadCreate(osThread(THREAD_GET_DATA), NULL);
+#endif
     WriteDataThreadId = osThreadCreate(osThread(THREAD_WRITE_DATA), NULL);
-    UsbComThreadId = osThreadCreate(osThread(THREAD_READ_WRITE_USB), NULL);
+    UsbComThreadId    = osThreadCreate(osThread(THREAD_READ_WRITE_USB), NULL);
 
     /* Start scheduler */
 
@@ -250,13 +264,15 @@ int main(void)
     while (1)
         ;
 }
+
 #if SENSIML_RECOGNITION
 
 #else
+
 static void BuildDeviceConfig()
 {
     memset(deviceConfigJson, 0, MAX_CONFIG_MSG_LEN);
-#if CAPTURE_AUDIO
+#if ENABLE_AUDIO
     InitAudio();
     sprintf(deviceConfigJson,
             "{"
@@ -269,8 +285,26 @@ static void BuildDeviceConfig()
             DEFAULT_AUDIO_IN_BUFFER_SIZE / sizeof(int16_t));
 #else
 
+    sprintf(deviceConfigJson,
+            "{"
+            "\"sample_rate\":%d,"
+            "\"samples_per_packet\":%d,"
+            "\"column_location\":{"
+            "\"AccelerometerX\":0,"
+            "\"AccelerometerY\":1,"
+            "\"AccelerometerZ\":2,"
+            "\"GyroscopeX\":3,"
+            "\"GyroscopeY\":4,"
+            "\"GyroscopeZ\":5,"
+            "\"MagnetometerX\":6,"
+            "\"MagnetometerY\":7,"
+            "\"MagnetometerZ\":8}"
+            "}\r\n",
+            MOTION_CAPTURE_RATE,
+            SAMPLES_PER_PACKET);
 #endif
 }
+
 #endif
 
 /**
@@ -367,24 +401,24 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
     }
 }
 
+#if ENABLE_AUDIO
 static void InitAudio()
 {
     Audio_Init_Acquisition_Peripherals(
-            AUDIO_IN_SAMPLING_FREQUENCY, ACTIVE_MICROPHONES_MASK, AUDIO_IN_CHANNELS);
+        AUDIO_IN_SAMPLING_FREQUENCY, ACTIVE_MICROPHONES_MASK, AUDIO_IN_CHANNELS);
     HAL_Delay(1000);
-
 }
+#endif
 
 /**
  * @brief  Get data raw from sensors to queue
  * @param  thread not used
  * @retval None
  */
-static void GetData_Thread(void const* argument)
+static void GetMotionDataThread(void const* argument)
 {
     (void) argument;
     T_SensorsData* mptr;
-
 
 
     readDataSem_id = osSemaphoreCreate(osSemaphore(readDataSem), 1);
@@ -395,11 +429,6 @@ static void GetData_Thread(void const* argument)
 
     /* Initialize and Enable the available sensors */
     MX_X_CUBE_MEMS1_Init();
-
-    if (LoggingInterface == USB_Datalog)
-    {
-        dataTimerStart();
-    }
 
     for (;;)
     {
@@ -461,7 +490,7 @@ static void RecognizeData_Thread(void const* argument)
     }
     recogDataQueue_id = osMessageCreate(osMessageQ(recogQueue), NULL);
 
-#if CAPTURE_AUDIO
+#if ENABLE_AUDIO
     T_AudioData* aptr;
     InitAudio();
     Audio_Start_Acquisition();
@@ -499,11 +528,14 @@ static void RecognizeData_Thread(void const* argument)
 static void StartDataCollection(void)
 {
     connected = 1;
-#if CAPTURE_AUDIO
+#if ENABLE_AUDIO
 
     Audio_Start_Acquisition();
 #else
-
+    if (LoggingInterface == USB_Datalog)
+    {
+        dataTimerStart();
+    }
 #endif
     jsonTimerStop();
 }
@@ -511,71 +543,54 @@ static void StartDataCollection(void)
 static void StopDataCollection(void)
 {
     connected = 0;
-#if CAPTURE_AUDIO
+#if ENABLE_AUDIO
     Audio_Stop_Acquisition();
 #else
-
+    if (LoggingInterface == USB_Datalog)
+    {
+        dataTimerStop();
+    }
 #endif
     jsonTimerStart();
 }
 
 #if SENSIML_RECOGNITION
 #else
+
 static void UsbComThread(void const* argument)
 {
     (void) argument;
-    osEvent  evt;
-    uint32_t len_rcvd;
-    sendJsonSem_id = osSemaphoreCreate(osSemaphore(sendJsonSem), 1);
-
     jsonTimerStart();
-    volatile int counter = 0;
     for (;;)
     {
-
-        if(connected == 0)
+        if (connected == 0)
         {
             memset(connect_buf, 0, MAX_CONNECT_DISCONNECT_STR_LEN);
             getInputString(connect_buf, strlen(connect_str));
-            if (connect_buf[0] != '\0'){
-                if(strncmp(connect_buf, connect_str, strlen(connect_str)-1) == 0)
+            if (connect_buf[0] != '\0')
+            {
+                if (strncmp(connect_buf, connect_str, strlen(connect_str) - 1) == 0)
                 {
                     StartDataCollection();
                 }
             }
         }
-//        elseif(connected == 1)
-//
-//        if (connect_buf[0] != '\0')
-//        {
-//            if (connected == 0 && strncmp(connect_buf, connect_str, strlen(connect_str)) == 0)
-//            {
-//                StartDataCollection();
-//            }
-//
-//            else if (connected == 1
-//                     && strncmp(connect_buf, disconnect_str, strlen(disconnect_str)) == 0)
-//            {
-//                StopDataCollection();
-//            }
-//        }
+        if (connected == 1)
+        {
+            memset(connect_buf, 0, MAX_CONNECT_DISCONNECT_STR_LEN);
+            getInputString(connect_buf, strlen(disconnect_str));
+            if (connect_buf[0] != '\0')
+            {
+                if (strncmp(connect_buf, disconnect_str, strlen(disconnect_str) - 1) == 0)
+                {
+                    StopDataCollection();
+                }
+            }
+        }
     }
-    //	evt = osMessageGet(sensorDataQueue_id, 0); // wait for message
-    //	if (evt.status == osEventMessage) {
-    //		if (evt.status == osEventMessage) {
-    //			if (evt.value.v == MSG_ENABLE_DISABLE) {
-    //				if (SD_Log_Enabled) {
-    //					DATALOG_SD_Log_Disable();
-    //					SD_Log_Enabled = 0;
-    //				} else {
-    //					aptr = evt.value.p;
-    //					CDC_Transmit_FS(aptr->audio,
-    //							DEFAULT_AUDIO_IN_BUFFER_SIZE / 2);
-    //					osPoolFree(sensorPool_id, aptr);
-    //				}
-    //			}
 }
-#endif //SENSIML_RECOGNITION
+
+#endif  // SENSIML_RECOGNITION
 
 
 /**
@@ -586,14 +601,14 @@ static void UsbComThread(void const* argument)
 static void WriteData_Thread(void const* argument)
 {
     (void) argument;
-    osEvent        evt;
+    osEvent evt;
     ;
-#if CAPTURE_AUDIO
-    T_AudioData *aptr;
-#endif
+#if ENABLE_AUDIO
+    T_AudioData* aptr;
+#else
     T_SensorsData* rptr;
-    int            size;
-    char           data_s[256];
+    memset(sensorsDataBuf, 0, SAMPLES_PER_PACKET * sizeof(T_SensorsData));
+#endif
     sensorPool_id      = osPoolCreate(osPool(sensorPool));
     sensorDataQueue_id = osMessageCreate(osMessageQ(dataqueue), NULL);
     for (;;)
@@ -601,8 +616,7 @@ static void WriteData_Thread(void const* argument)
         evt = osMessageGet(sensorDataQueue_id, osWaitForever);  // wait for message
         if (evt.status == osEventMessage)
         {
-
-#if CAPTURE_AUDIO
+#if ENABLE_AUDIO
             aptr = evt.value.p;
             CDC_Transmit_FS((uint8_t*) aptr->audio, DEFAULT_AUDIO_IN_BUFFER_SIZE);
             osPoolFree(sensorPool_id, aptr);
@@ -610,52 +624,26 @@ static void WriteData_Thread(void const* argument)
 
             rptr = evt.value.p;
 
-                if (LoggingInterface == USB_Datalog)
+            if (LoggingInterface == USB_Datalog)
+            {
+                memcpy(&sensorsDataBuf[packet_index++], rptr, sizeof(T_SensorsData));
+                if (packet_index >= SAMPLES_PER_PACKET)
                 {
-                    size = sprintf(
-                        data_s,
-                        "TimeStamp: %ld\r\n Acc_X: %d, Acc_Y: %d, Acc_Z :%d\r\n Gyro_X:%d, Gyro_Y:%d, Gyro_Z:%d\r\n Magn_X:%d, Magn_Y:%d, Magn_Z:%d\r\n Press:%5.2f, Temp:%5.2f, Hum:%4.1f\r\n",
-                        rptr->ms_counter,
-                        (int) rptr->acc.x,
-                        (int) rptr->acc.y,
-                        (int) rptr->acc.z,
-                        (int) rptr->gyro.x,
-                        (int) rptr->gyro.y,
-                        (int) rptr->gyro.z,
-                        (int) rptr->mag.x,
-                        (int) rptr->mag.y,
-                        (int) rptr->mag.z,
-                        rptr->pressure,
-                        rptr->temperature,
-                        rptr->humidity);
-                    osPoolFree(sensorPool_id, rptr);  // free memory allocated for message
-                    BSP_LED_Toggle(LED1);
-                    CDC_Transmit_FS((uint8_t*) data_s, size);
+                    CDC_Transmit_FS((uint8_t*) sensorsDataBuf,
+                                    SAMPLES_PER_PACKET * sizeof(T_SensorsData));
+                    packet_index = 0;
                 }
                 else
                 {
-                    size = sprintf(
-                        data_s,
-                        "%ld, %d, %d, %d, %d, %d, %d, %d, %d, %d, %5.2f, %5.2f, %4.1f\r\n",
-                        rptr->ms_counter,
-                        (int) rptr->acc.x,
-                        (int) rptr->acc.y,
-                        (int) rptr->acc.z,
-                        (int) rptr->gyro.x,
-                        (int) rptr->gyro.y,
-                        (int) rptr->gyro.z,
-                        (int) rptr->mag.x,
-                        (int) rptr->mag.y,
-                        (int) rptr->mag.z,
-                        rptr->pressure,
-                        rptr->temperature,
-                        rptr->humidity);
                     osPoolFree(sensorPool_id, rptr);  // free memory allocated for message
-                    DATALOG_SD_writeBuf(data_s, size);
+                    // DATALOG_SD_writeBuf(data_s, size);
+                }
+                osPoolFree(sensorPool_id, rptr);
                 }
 #endif
-        }
+
     }
+}
 }
 
 /**
@@ -701,7 +689,7 @@ void SystemClock_Config(void)
     /**Initializes the CPU, AHB and APB busses clocks
      */
     RCC_ClkInitStruct.ClockType
-            = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
+        = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
     RCC_ClkInitStruct.SYSCLKSource   = RCC_SYSCLKSOURCE_PLLCLK;
     RCC_ClkInitStruct.AHBCLKDivider  = RCC_SYSCLK_DIV1;
     RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
@@ -743,10 +731,7 @@ void SystemClock_Config(void)
     HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
 }
 
-static void dataTimer_Callback(void const* arg)
-{
-    osSemaphoreRelease(readDataSem_id);
-}
+static void dataTimer_Callback(void const* arg) { osSemaphoreRelease(readDataSem_id); }
 
 #if SENSIML_RECOGNITION
 #else
@@ -783,7 +768,7 @@ static void jsonTimerStart(void)
     osStatus status;
 
     // Create periodic timer
-    execJson         = 1;
+    execJson     = 1;
     jsonTimer_id = osTimerCreate(osTimer(JsonTimer), osTimerPeriodic, &execJson);
     if (jsonTimer_id)
     {
@@ -811,14 +796,15 @@ static void _Error_Handler(void)
     while (1) {}
 }
 
-xTaskHandle *bad_task_handle;
-signed char *bad_task_name;
-void vApplicationStackOverflowHook(xTaskHandle *pxTask, signed char *pcTaskName )
+xTaskHandle* bad_task_handle;
+signed char* bad_task_name;
+void         vApplicationStackOverflowHook(xTaskHandle* pxTask, signed char* pcTaskName)
 {
-    bad_task_handle = pxTask;     // this seems to give me the crashed task handle
-    bad_task_name = pcTaskName;     // this seems to give me a pointer to the name of the crashed task
+    bad_task_handle = pxTask;    // this seems to give me the crashed task handle
+    bad_task_name = pcTaskName;  // this seems to give me a pointer to the name of the crashed task
 
-    for( ;; );
+    for (;;)
+        ;
 }
 
 #ifdef USE_FULL_ASSERT

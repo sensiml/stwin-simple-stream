@@ -6,6 +6,7 @@
 #include "string.h"
 #include "STWIN.h"
 
+#if ENABLE_AUDIO
 
 #if SENSIML_RECOGNITION
 #include "kb.h"
@@ -151,3 +152,5 @@ void Error_Handler(void) {
 	while (1)
 		;
 }
+
+#endif //#if ENABLE_AUDIO

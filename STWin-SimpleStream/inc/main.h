@@ -50,25 +50,35 @@ extern "C" {
 /* Exported constants --------------------------------------------------------*/
 #define RTC_ASYNCH_PREDIV  0x7F
 #define RTC_SYNCH_PREDIV   0x00FF
-
-#define CAPTURE_AUDIO 1
-#define MAX_CONNECT_DISCONNECT_STR_LEN 11
-#define MAX_CONFIG_MSG_LEN 512
-
-/* Sensor data acquisition period [ms] */
-#define DATA_PERIOD_MS (5)
+#define MOTION_CAPTURE_RATE 200
+#define DATA_PERIOD_MS (1000/MOTION_CAPTURE_RATE)
 #define CONFIG_OUT_PERIOD_MS (1000)
 #define DATAQUEUE_SIZE ((uint32_t) 50)
 
+#define MAX_CONNECT_DISCONNECT_STR_LEN 11
+#define MAX_CONFIG_MSG_LEN 512
+#define ENABLE_AUDIO 1
 #define MSG_CONNECT   (0x00000007)
 #define MSG_DISCONNECT	(0x10000007)
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
+#if ENABLE_AUDIO
 void Audio_Init_Acquisition_Peripherals(uint32_t AudioFreq, uint32_t Device, uint32_t ChnlNbr);
 void Audio_Start_Acquisition(void);
 void Audio_Stop_Acquisition(void);
-void Error_Handler(void);
 void AudioProcess(void);
+#else
+#define CAPTURE_ACCEL 1
+#define CAPTURE_GYRO 1
+#define CAPTURE_MAG 1
+#define SAMPLES_PER_PACKET 6
+
+/* Sensor data acquisition period [ms] */
+
+#endif
+
+void Error_Handler(void);
+
 /* Includes ------------------------------------------------------------------*/
 
 #include "usbd_def.h"
