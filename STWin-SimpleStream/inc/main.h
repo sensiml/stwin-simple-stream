@@ -57,7 +57,7 @@ extern "C" {
 
 #define MAX_CONNECT_DISCONNECT_STR_LEN 11
 #define MAX_CONFIG_MSG_LEN 512
-#define ENABLE_AUDIO 1
+#define ENABLE_AUDIO 0
 #define MSG_CONNECT   (0x00000007)
 #define MSG_DISCONNECT	(0x10000007)
 /* Exported macro ------------------------------------------------------------*/

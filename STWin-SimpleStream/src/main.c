@@ -154,7 +154,9 @@ static void BuildDeviceConfig();
 
 static void UsbComThread(void const* argument);
 
+#if ENABLE_AUDIO == 0
 static void GetMotionDataThread(void const* argument);
+#endif
 
 static void WriteData_Thread(void const* argument);
 
@@ -162,21 +164,19 @@ static void StartDataCollection(void);
 
 static void StopDataCollection(void);
 
-
+#if ENABLE_AUDIO == 0
 static void dataTimer_Callback(void const* arg);
 
 static void dataTimerStart(void);
 
 static void dataTimerStop(void);
+#endif
 
 static void jsonTimer_Callback(void const* arg);
 
 static void jsonTimerStart(void);
 
 static void jsonTimerStop(void);
-
-osTimerId sensorTimId;
-osTimerDef(SensorTimer, dataTimer_Callback);
 
 osTimerId jsonTimer_id;
 osTimerDef(JsonTimer, jsonTimer_Callback);
@@ -185,6 +185,9 @@ osTimerDef(JsonTimer, jsonTimer_Callback);
 
 #if ENABLE_AUDIO
 static void InitAudio();
+#else
+osTimerId sensorTimId;
+osTimerDef(SensorTimer, dataTimer_Callback);
 #endif
 
 void SystemClock_Config(void);
@@ -408,7 +411,7 @@ static void InitAudio()
         AUDIO_IN_SAMPLING_FREQUENCY, ACTIVE_MICROPHONES_MASK, AUDIO_IN_CHANNELS);
     HAL_Delay(1000);
 }
-#endif
+#else
 
 /**
  * @brief  Get data raw from sensors to queue
@@ -476,6 +479,7 @@ static void GetMotionDataThread(void const* argument)
         }
     }
 }
+#endif
 
 #if SENSIML_RECOGNITION
 static void RecognizeData_Thread(void const* argument)
@@ -731,10 +735,11 @@ void SystemClock_Config(void)
     HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
 }
 
-static void dataTimer_Callback(void const* arg) { osSemaphoreRelease(readDataSem_id); }
 
-#if SENSIML_RECOGNITION
-#else
+
+#if SENSIML_RECOGNITION == 0
+#if ENABLE_AUDIO == 0
+static void dataTimer_Callback(void const* arg) { osSemaphoreRelease(readDataSem_id); }
 static void dataTimerStart(void)
 {
     osStatus status;
@@ -757,6 +762,7 @@ static void dataTimerStop(void)
     osTimerStop(sensorTimId);
     osTimerDelete(sensorTimId);
 }
+#endif //ENABLE_AUDIO
 
 static void jsonTimer_Callback(void const* arg)
 {

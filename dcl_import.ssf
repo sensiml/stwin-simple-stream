@@ -1,0 +1,100 @@
+{
+    "uuid": "47333828-0c01-4125-9cd4-f3d274ec5cf4",
+    "name": "STWin Custom",
+    "collection_methods": [
+        {
+            "name": "live",
+            "display_name": "Live Stream Capture",
+            "storage_path": null,
+            "is_default": true
+        }
+    ],
+    "device_connections": [
+        {
+            "name": "serial",
+            "display_name": "Serial Port",
+            "value": 1,
+            "is_default": true,
+            "serial_port_configuration": {
+                "com_port": null,
+                "baud": 921600,
+                "stop_bits": 1,
+                "parity": 0,
+                "handshake": 0,
+                "max_live_sample_rate": 611
+            }
+        },
+        {
+            "name": "wifi",
+            "display_name": "WiFi",
+            "value": 2,
+            "is_default": true,
+            "wifi_configuration": {
+                "use_mqttsn": false,
+                "use_external_broker": false,
+                "external_broker_address":"",
+                "broker_port":1885,
+                "device_ip_address": null,
+                "device_port": 0,
+                "max_live_sample_rate": 1000000
+            }
+        }
+    ],
+    "capture_sources": [
+        {
+            "max_throughput": 0,
+            "name": "Motion",
+            "part": "Default",
+            "sample_rates": [
+                200, 100, 50
+            ],
+            "sensors": [
+                {
+                    "column_count": 3,
+                    "column_suffixes": ["X", "Y", "Z"],
+                    "type": "Accelerometer",
+                    "parameters": [],
+                    "sensor_id": 1,
+                    "can_live_stream": true
+                },
+                {
+                    "column_count": 3,
+                    "column_suffixes": ["X", "Y", "Z"],
+                    "type": "Gyroscope",
+                    "parameters": [],
+                    "sensor_id": 2,
+                    "can_live_stream": true
+                },
+                {
+                    "column_count": 3,
+                    "column_suffixes": ["X", "Y", "Z"],
+                    "type": "Magnetometer",
+                    "parameters": [],
+                    "sensor_id": 3,
+                    "can_live_stream": true
+                }
+            ],
+            "sensor_combinations": null
+        },
+        {
+            "max_throughput": 0,
+            "name": "Audio",
+            "part": "Default",
+            "sample_rates": [
+                16000
+            ],
+            "sensors": [
+                {
+                    "column_count": 1,
+                    "column_suffixes": ["0"],
+                    "type": "Microphone",
+                    "parameters": [],
+                    "sensor_id": 4,
+                    "can_live_stream": true
+                }
+            ],
+            "sensor_combinations": null
+        }
+    ],
+    "is_little_endian": true
+}
