@@ -1,0 +1,6 @@
+name: 'Binary Builds'
+description: 'Build binaries using docker'
+
+runs:
+  using: 'docker'
+  image: 'Dockerfile'

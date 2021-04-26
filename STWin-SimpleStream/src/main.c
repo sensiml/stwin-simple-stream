@@ -512,16 +512,25 @@ static void RecognizeData_Thread(void const* argument)
         evt = osMessageGet(recogDataQueue_id, 0);  // wait for message
         if (evt.status == osEventMessage)
         {
+#if ENABLE_AUDIO
             aptr = evt.value.p;
             sml_recognition_run((signed short*) aptr->audio,
                                 DEFAULT_AUDIO_IN_BUFFER_SIZE / 2,
                                 AUDIO_IN_CHANNELS,
                                 1);
             osPoolFree(recogSensorPool_id, aptr);
+#else
+            mptr = evt.value.p;
+            sml_recognition_run((signed short*) mptr,
+                                9,
+                                1,
+                                1);
+            osPoolFree(recogSensorPool_id, mptr);
         }
     }
 }
-#endif
+#endif //ENABLE_AUDIO
+#endif //SENSIML_RECOGNITION
 
 /**
  * @brief  Get data raw from sensors to queue
