@@ -10,9 +10,7 @@ extern "C"
 {
 #endif
 
-#define SML_DEBUG 1
-#define KB_LOG_LEVEL 1
-#define SML_PROFILER 0
+
 #ifndef SML_DEBUG
 #define SML_DEBUG 0
 #endif

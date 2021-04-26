@@ -32,10 +32,10 @@ int sml_recognition_run(signed short *data_batch, int batch_sz,
 	#else
 		data = &data_batch[batch_index * num_sensors];
 
-		ret = kb_run_model_with_cascade_reset((SENSOR_DATA_T *)data, num_sensors, KB_MODEL_tf_all_ann_1_INDEX);
+		ret = kb_run_model_with_cascade_reset((SENSOR_DATA_T *)data, num_sensors, KB_MODEL_tf_all_cnn_1_INDEX);
 		if (ret >= 0){
-			kb_print_model_result(KB_MODEL_tf_all_ann_1_INDEX, ret);
-			sml_output_results(KB_MODEL_tf_all_ann_1_INDEX, ret);
+			kb_print_model_result(KB_MODEL_tf_all_cnn_1_INDEX, ret);
+			sml_output_results(KB_MODEL_tf_all_cnn_1_INDEX, ret);
 			kb_reset_model(0);
 		};
 

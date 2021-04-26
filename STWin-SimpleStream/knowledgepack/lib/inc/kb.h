@@ -36,9 +36,9 @@
 #define SENSIML_NUMBER_OF_MODELS 1
 
 //Model Indexes to use for calls
-#define KB_MODEL_tf_all_ann_1_INDEX 0
+#define KB_MODEL_tf_all_cnn_1_INDEX 0
 
-#define MAX_VECTOR_SIZE 88
+#define MAX_VECTOR_SIZE 400
 
 //FILL_SENSIML_SENSOR_USAGES
 
