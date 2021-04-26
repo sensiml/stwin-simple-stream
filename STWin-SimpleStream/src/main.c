@@ -144,6 +144,14 @@ uint32_t                execJson;
 volatile uint32_t       t_stwin = 0;
 
 /* Private function prototypes -----------------------------------------------*/
+#if ENABLE_AUDIO == 0
+static void dataTimer_Callback(void const* arg);
+
+static void dataTimerStart(void);
+
+static void dataTimerStop(void);
+#endif
+
 #if SENSIML_RECOGNITION
 static void RecognizeData_Thread(void const* argument);
 
@@ -164,13 +172,7 @@ static void StartDataCollection(void);
 
 static void StopDataCollection(void);
 
-#if ENABLE_AUDIO == 0
-static void dataTimer_Callback(void const* arg);
 
-static void dataTimerStart(void);
-
-static void dataTimerStop(void);
-#endif
 
 static void jsonTimer_Callback(void const* arg);
 
