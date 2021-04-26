@@ -1,13 +1,14 @@
+name: Binary Build Check
 on: [push]
 
 jobs:
   docker-build-job:
     runs-on: ubuntu-latest
-    name: A job to ensure binaries build
-    
+    name: Ensure binaries build for Data collection and recognition
+
     steps:
     - name: Checkout
       uses: actions/checkout@v2
-    - name: Build Binary  
+    - name: Build Binary
       uses: ./docker-build-binary-action
 

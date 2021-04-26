@@ -492,7 +492,7 @@ static void RecognizeData_Thread(void const* argument)
     recogSensorPool_id = osPoolCreate(osPool(recogSensorPool));
     if (recogSensorPool_id == NULL)
     {
-        Error_Handler();
+        _Error_Handler();
     }
     recogDataQueue_id = osMessageCreate(osMessageQ(recogQueue), NULL);
 
@@ -748,7 +748,7 @@ void SystemClock_Config(void)
 
 
 
-#if SENSIML_RECOGNITION == 0
+
 #if ENABLE_AUDIO == 0
 static void dataTimer_Callback(void const* arg) { osSemaphoreRelease(readDataSem_id); }
 static void dataTimerStart(void)
@@ -774,7 +774,7 @@ static void dataTimerStop(void)
     osTimerDelete(sensorTimId);
 }
 #endif //ENABLE_AUDIO
-
+#if SENSIML_RECOGNITION == 0
 static void jsonTimer_Callback(void const* arg)
 {
     CDC_Transmit_FS((uint8_t*) deviceConfigJson, strlen(deviceConfigJson));
