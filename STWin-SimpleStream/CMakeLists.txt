@@ -286,7 +286,7 @@ target_link_options(${EXECUTABLE} PRIVATE
         -specs=nano.specs
         -lc
         -lm
-        -Wl,-Map=${PROJECT_NAME}.map,--cref
+        -Wl,-Map=${exe_name}.map,--cref
         -Wl,--gc-sections
         -static
         )
@@ -300,7 +300,7 @@ add_custom_command(TARGET ${EXECUTABLE}
 # Create hex file
 add_custom_command(TARGET ${EXECUTABLE}
         POST_BUILD
-        COMMAND arm-none-eabi-objcopy -O ihex ${EXECUTABLE} ${PROJECT_NAME}.hex
-        COMMAND arm-none-eabi-objcopy -O binary ${EXECUTABLE} ${PROJECT_NAME}.bin)
+        COMMAND arm-none-eabi-objcopy -O ihex ${EXECUTABLE} ${exe_name}.hex
+        COMMAND arm-none-eabi-objcopy -O binary ${EXECUTABLE} ${exe_name}.bin)
 
     endforeach()
