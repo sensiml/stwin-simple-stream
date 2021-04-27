@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 3.20.0)
-include(${CMAKE_TOOLCHAIN_FILE})
+if(DEFINED ${CMAKE_TOOLCHAIN_FILE})
+        include(${CMAKE_TOOLCHAIN_FILE})
+else()
+        include("arm-none-eabi-gcc.cmake")
+endif()
+
 project(stwin-sensiml-simplestream C CXX)
 
 enable_language(CXX ASM)
