@@ -23,6 +23,18 @@ The default generator is a Makefile for CMake. After this building the binary wo
 - For recognition:
   - `make stwin-sensiml-simplestream-recognition.elf -j`
 
+## Using Docker
+
+SensiML provides a public docker image using the current version of ARM-GCC utilized by STMicroelectronics CubeIDE. To run this locally, you will need to have Docker installed. You can then use the Dockerfile in `docker-build-binary-action`:
+
+```
+cd docker-build-binary-action
+docker build . -t my-stwin-builder
+cd ..
+docker run -v `pwd`:/build -e GITHUB_WORKSPACE=/build my-stwin-builder
+```
+
+The binary for both recognition and data collection will be built. They will be located (by default) in `STWin-SimpleStream/docker-build`
 
 ## Enabling Audio & IMU
 

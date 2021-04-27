@@ -528,10 +528,11 @@ static void RecognizeData_Thread(void const* argument)
                                 1,
                                 1);
             osPoolFree(recogSensorPool_id, mptr);
+#endif //ENABLE_AUDIO
         }
     }
 }
-#endif //ENABLE_AUDIO
+
 #endif //SENSIML_RECOGNITION
 
 /**
@@ -539,6 +540,11 @@ static void RecognizeData_Thread(void const* argument)
  * @param  thread not used
  * @retval None
  */
+
+
+
+#if SENSIML_RECOGNITION
+#else
 
 static void StartDataCollection(void)
 {
@@ -568,9 +574,6 @@ static void StopDataCollection(void)
 #endif
     jsonTimerStart();
 }
-
-#if SENSIML_RECOGNITION
-#else
 
 static void UsbComThread(void const* argument)
 {
