@@ -1,5 +1,11 @@
 name: Binary Build Check
-on: [push]
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   docker-build-job:
