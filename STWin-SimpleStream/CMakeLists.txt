@@ -198,11 +198,7 @@ add_executable(${EXECUTABLE}
         )
 
 if(${exe_name} STREQUAL ${DATA_CAPTURE})
-set(
-        ARCHIVE_OUTPUT_DIRECTORY "cmake-build-debug-arm-data-collection"
-        LIBRARY_OUTPUT_DIRECTORY "cmake-build-debug-arm-data-collection"
-        RUNTIME_OUTPUT_DIRECTORY "cmake-build-debug-arm-data-collection"
-)
+
 target_compile_definitions(${EXECUTABLE} PRIVATE
             -DSENSIML_RECOGNITION=0
             )
@@ -219,13 +215,10 @@ sensiml
 tensorflow-microlite
 m
 )
-set(
-        ARCHIVE_OUTPUT_DIRECTORY "cmake-build-debug-arm-recognition"
-        LIBRARY_OUTPUT_DIRECTORY "cmake-build-debug-arm-recognition"
-        RUNTIME_OUTPUT_DIRECTORY "cmake-build-debug-arm-recognition"
-)
+
 endif()
 set_target_properties(${EXECUTABLE} PROPERTIES LINKER_LANGUAGE CXX)
+
 
 target_compile_definitions(${EXECUTABLE} PRIVATE
         -DSTM32L4R9xx
@@ -240,6 +233,7 @@ target_compile_options(${EXECUTABLE} PRIVATE
         -mfloat-abi=hard
         -fdata-sections
         -ffunction-sections
+        -fdump-rtl-dfinish -fstack-usage
         -Wall
         $<$<CONFIG:Debug>:-Og>
         )

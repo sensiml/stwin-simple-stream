@@ -112,3 +112,4 @@ out/
 # JIRA plugin
 atlassian-ide-plugin.xml
 
+/.vscode/c_cpp_properties.json
