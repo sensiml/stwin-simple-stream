@@ -25,7 +25,7 @@ set(APP_FILES
         src/usbd_cdc_interface.c
         src/usbd_conf.c
         src/usbd_desc.c
-        startup_stm32l4r9xx.s
+        startup_stm32l4r9xx.S
         knowledgepack/src/sml_output.c
         knowledgepack/src/sml_recognition_run.c
         )
